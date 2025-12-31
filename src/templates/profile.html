@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+<!-- Header -->
+<header class="bg-white shadow-sm">
+  <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+    <h1 class="text-lg font-semibold">Profile</h1>
+    <a href="/main" class="text-sm text-blue-600 hover:underline">Back</a>
+  </div>
+</header>
+
+<!-- Profile Card -->
+<main class="max-w-4xl mx-auto px-6 py-10">
+  <section class="bg-white shadow rounded-lg p-6 flex items-center gap-6">
+
+    <!-- Avatar -->
+    <div class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-2xl font-semibold">
+      {{ user.username[0:2]|upper }}
+    </div>
+
+    <!-- Info -->
+    <div class="flex-1">
+      <p class="text-sm text-gray-500">Username</p>
+      <p class="font-medium">{{ user.username }}</p>
+
+      <p class="text-sm text-gray-500 mt-2">Email</p>
+      <p class="font-medium">{{ user.email }}</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-col gap-2">
+      <button id="editProfileBtn"
+        class="px-4 py-2 text-sm bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200">
+        Edit Profile
+      </button>
+
+      <button id="deleteAccountBtn"
+        class="px-4 py-2 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200">
+        Delete Account
+      </button>
+    </div>
+  </section>
+</main>
+
+<!-- EDIT PROFILE MODAL -->
+<div id="editProfileModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md">
+    <h3 class="text-lg font-semibold mb-4">Edit Profile</h3>
+
+    <form id="editProfileForm" class="space-y-3">
+      <input type="hidden" id="userId" value="{{ user.id }}">
+
+      <input id="editUsername" class="w-full border p-2 rounded text-sm"
+        value="{{ user.username }}" placeholder="Username">
+
+      <input id="editEmail" class="w-full border p-2 rounded text-sm"
+        value="{{ user.email }}" placeholder="Email">
+
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" id="cancelEdit"
+          class="px-4 py-2 text-sm bg-gray-100 rounded">
+          Cancel
+        </button>
+
+        <button type="submit"
+          class="px-4 py-2 text-sm bg-blue-600 text-white rounded">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DELETE ACCOUNT MODAL -->
+<div id="deleteAccountModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-sm text-center">
+    <h3 class="text-lg font-semibold mb-3">Delete Account?</h3>
+
+    <p class="text-sm text-gray-600 mb-5">
+      This will permanently delete your account and all associated data.
+    </p>
+
+    <div class="flex justify-center gap-3">
+      <button id="cancelDelete"
+        class="px-4 py-2 text-sm bg-gray-100 rounded">
+        Cancel
+      </button>
+
+      <button id="confirmDelete"
+        class="px-4 py-2 text-sm bg-red-600 text-white rounded">
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const editBtn = document.getElementById('editProfileBtn');
+const deleteBtn = document.getElementById('deleteAccountBtn');
+
+const editModal = document.getElementById('editProfileModal');
+const deleteModal = document.getElementById('deleteAccountModal');
+
+editBtn.onclick = () => editModal.classList.remove('hidden');
+deleteBtn.onclick = () => deleteModal.classList.remove('hidden');
+
+document.getElementById('cancelEdit').onclick = () =>
+  editModal.classList.add('hidden');
+
+document.getElementById('cancelDelete').onclick = () =>
+  deleteModal.classList.add('hidden');
+
+/* UPDATE PROFILE */
+document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const id = document.getElementById('userId').value;
+  const fd = new FormData();
+  fd.append('username', document.getElementById('editUsername').value);
+  fd.append('email', document.getElementById('editEmail').value);
+
+  const resp = await fetch(`/update/user/${id}`, {
+    method: 'POST',
+    body: fd,
+    credentials: 'same-origin'
+  });
+
+  const data = await resp.json();
+  if(data.status === 'success'){
+    location.reload();
+  }
+});
+
+/* DELETE ACCOUNT */
+document.getElementById('confirmDelete').onclick = async () => {
+  const id = document.getElementById('userId').value;
+
+  const resp = await fetch(`/delete/user/${id}`, {
+    method: 'POST',
+    credentials: 'same-origin'
+  });
+
+  const data = await resp.json();
+  if(data.status === 'success'){
+    window.location.href = '/';
+  }
+};
+</script>
+
+</body>
+</html>

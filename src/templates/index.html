@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login-Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <main class="flex items-center justify-center mt-20">
+    
+        <!-- Introducing the login section right here-->
+        <section class="bg-white shadow-sm h-[400px] w-[400px] rounded-xl flex flex-col items-center justify-start p-6 border border-gray-200">
+            <h1 class="font-semibold text-2xl text-blue-700/80 mb-6">Welcome back</h1>
+
+            <form id="loginForm" action="/" method="post" class="flex flex-col items-center justify-center gap-3 w-full">
+
+                <div id="loginMessage" class="w-full text-sm text-center mb-2 hidden" role="status" aria-live="polite"></div>
+
+                <label for="email" class="self-start text-sm text-gray-600 font-medium">Email</label>
+                <input type="text" id="email" required
+                name="email" placeholder="Type your email here"
+                class="rounded-md p-3 w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+
+                <label for="password" class="self-start text-sm text-gray-600 font-medium">Password</label>
+                <input type="text" id="password" required
+                name="password" placeholder="Type your password here"
+                class="rounded-md p-3 w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 w-full p-3 text-white text-sm font-semibold rounded-md transition
+                hover:bg-white text-white hover:text-blue-600"
+                >Entrar</button>
+                <a href="/forgot-password" class="text-xs text-blue-600 hover:underline mt-2">
+    Forgot your password?
+  </a>
+            </form>
+            <div class="mt-6 text-sm text-gray-600">
+    Don’t have an account?
+    <a href="/signup" class="text-blue-600 font-medium hover:underline ml-1">
+      Sign up
+    </a>
+  </div>
+        </section>
+    </main>
+    
+</body>
+
+<script>
+    // Making the ajax verification (replaced with working fetch handler)
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('loginForm');
+      const msg = document.getElementById('loginMessage');
+
+      function showMessage(text, type = 'error') {
+        msg.classList.remove('hidden','text-red-600','text-green-600','bg-red-50','bg-green-50','border-red-200','border-green-200');
+        msg.textContent = text;
+        if (type === 'success') {
+          msg.classList.add('text-green-600','bg-green-50','border','border-green-200','p-2','rounded-md');
+        } else {
+          msg.classList.add('text-red-600','bg-red-50','border','border-red-200','p-2','rounded-md');
+        }
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+
+        try {
+          const response = await fetch(form.action || '/', {
+            method: form.method || 'POST',
+            body: formData,
+            credentials: 'same-origin'
+          });
+
+          const data = await response.json();
+
+          if (data.status === 'success') {
+            // inline message
+            showMessage(data.message || 'Login successful', 'success');
+            // popup notification
+            // short delay then redirect to main page
+            setTimeout(() => { window.location.href = '/main'; }, 600);
+            return;
+          }
+
+          // error case: show backend message
+          showMessage(data.message || 'Login failed', 'error');
+
+        } catch (err) {
+          console.error('Login request error:', err);
+          showMessage('Network error. Please try again.', 'error');
+        }
+      });
+    });
+</script>
+</html>
