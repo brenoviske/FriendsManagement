@@ -3,3 +3,4 @@
 instance/ # Ignoring the database 
 src/__pycache__/
 src/instance/
+.env
