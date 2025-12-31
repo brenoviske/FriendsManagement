@@ -5,14 +5,16 @@ from base import db
 import os
 from functools import wraps
 from dotenv import load_dotenv
+import pymysql
 
 load_dotenv()
 
 secret_key = os.getenv('secret_key')
+database = os.getenv('database')
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = database
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.secret_key = secret_key
