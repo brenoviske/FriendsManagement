@@ -7,7 +7,7 @@ from functools import wraps
 from dotenv import load_dotenv
 import pymysql
 
-load_dotenv()
+load_dotenv() # LOADING ENVIROMENT VARIABLES 
 
 secret_key = os.getenv('secret_key')
 database = os.getenv('database')
@@ -18,7 +18,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.secret_key = secret_key
-db.init_app(app=app)
+db.init_app(app=app) # INITIALIZING APPLICATION RIGHT HERE 
 
 # ------- SOME HELPER METHODS RIGHT HERE --------- #
 
