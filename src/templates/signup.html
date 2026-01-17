@@ -136,9 +136,6 @@
         return;
       }
 
-      message.textContent = "Account ready to be created ✔";
-      message.className = "text-xs text-green-600";
-
       // Prepare and send via fetch to backend
       const formData = new FormData(form);
 
@@ -160,7 +157,6 @@
 
         // error from backend
         showSignupMessage(data.message || 'Signup failed', 'error');
-        alert(data.message || 'Signup failed');
 
       } catch (err) {
         console.error('Signup request error:', err);
