@@ -5,7 +5,7 @@ from base import db
 class User(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True,autoincrement=True)
 
     email = db.Column(db.String(200), unique=True, nullable=False)
     username = db.Column(db.String(200), unique=True, nullable=False)
@@ -20,7 +20,7 @@ class User(db.Model):
 class Friend(db.Model):
     __tablename__ = 'friends'
     # NON NULLABLE ATTRIBUTES
-    id = db.Column(db.Integer, primary_key=True , auto_increment = True)
+    id = db.Column(db.Integer, primary_key=True , autoincrement = True)
     name = db.Column(db.String(200), nullable=False)
     country = db.Column(db.String(200), nullable=False)
 

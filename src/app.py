@@ -1,11 +1,13 @@
 from flask import Flask, request , url_for , redirect , render_template , jsonify , session
 from werkzeug.security import generate_password_hash , check_password_hash
 from models import User, Friend
+from controller import FriendController , UserController
 from base import db
 import os
 from functools import wraps
 from dotenv import load_dotenv
 import pymysql
+from controller import UserController , FriendController
 
 load_dotenv() # LOADING ENVIROMENT VARIABLES 
 
@@ -35,11 +37,7 @@ def login_required(view):
         return view(*args,**kwargs)
     return wrapped_view
 
-
-
 # ------- Now Adjusting routes right here -------- # 
-
-
 
 @app.route('/signup', methods = ['GET','POST'])
 def signUp():
@@ -47,53 +45,13 @@ def signUp():
     if request.method == 'POST':
         
         data = get_frontend_form()
-
-        existing_email = User.query.filter_by(
-            email = data.get('email'),
-        ).first()
-
-
-        existing_username = User.query.filter_by(
-            username = data.get('username')
-        ).first()
-
-        if existing_email:
-            return jsonify({
-                'status':'error',
-                'message':'Email already linked in our database'
-            })
-        
-        if existing_username:
-            return jsonify({
-                'status':'error',
-                'message':'Username already linked in our database'
-            })
-
-     # Ok, with these verifcations already past it is time to added the user to our database
-
-        email = data.get('email')
-        username = data.get('username')
-        password = generate_password_hash(data.get('password'))
-
         new_user = User(
-            email = email,
-            username = username,
-            password_hash = password
+            email = data.get('email'),
+            username = data.get('username'),
+            password_hash= generate_password_hash(data.get('password'))
         )
 
-        try:
-            db.session.add(new_user)
-            db.session.commit()
-            return jsonify({'status':'success'})
-        
-        except Exception as e:
-            print('Error:',e)
-            return jsonify({
-                'status':'error',
-                'message':'There was an issue'
-            })
-        
-
+        return UserController.add_user(new_user)
     return render_template('signup.html')
 
 
@@ -101,17 +59,13 @@ def signUp():
 def login():
 
     if request.method == 'POST':
+
         data = get_frontend_form()
         
         existing_user = User.query.filter_by(
             email = data.get('email')
         ).first()
 
-        if not existing_user :
-            return jsonify({
-                'status':'error',
-                'message':'Invalid Credentials'
-            })
         
         if existing_user and check_password_hash(existing_user.password_hash , data.get('password')):
             try:
@@ -168,9 +122,7 @@ def api_friends_list():
 @login_required
 def add_friend_to_list():
     
-    if request.method == 'POST':
         data = get_frontend_form()
-
         # GATHERING FRONTEND INFORMATION 
 
         name = data.get('name')
@@ -185,28 +137,7 @@ def add_friend_to_list():
             note = note,
             user_id = session['user_id']
         )
-
-        try:
-            db.session.add(new_friend)
-            db.session.commit()
-            db.session.refresh(new_friend)
-
-            return jsonify({
-                'status':'success',
-                'friend':{
-                    'id':new_friend.id,
-                    'name':new_friend.name,
-                    'country':new_friend.country,
-                    'age':new_friend.age,
-                    'note':new_friend.note
-                }
-            })
-        
-        except Exception as e:
-            print('Error:',e)
-            return jsonify({'status':'error','message':'There was an issue while adding your friend'})
-        
-    return render_template('main.html')
+        return FriendController.add_friend(new_friend)
 
 @app.route('/update/friend/<int:id>' , methods = ['POST'])
 @login_required
@@ -216,26 +147,15 @@ def update_friend_from_list(id:int):
     
     if existing_friend.user_id != session['user_id']:
         return jsonify({'status':'error','message':'Unauthorized!'})
-    if request.method == 'POST':
-        data = get_frontend_form()
-
-        try:
-            existing_friend.name = data.get('name')
-            existing_friend.country = data.get('country')
-            existing_friend.age = data.get('age')
-            existing_friend.note = data.get('note')
-
-            db.session.commit()
-            return jsonify({'status':'success'})
-        
-        except Exception as e:
-            print('Error:',e)
-            return jsonify({
-                'status':'error',
-                'message':'There was an issue updating your friend in the list'
-            })
     
-    return render_template('main.html')
+    # Gathering the atributes from the update formulary 
+    data = get_frontend_form()
+    name = data.get('name')
+    country = data.get('country')
+    age = data.get('age')
+    note = data.get('note')
+
+    return FriendController.update_friend(id,name,country,age,note,db)
 
 @app.route('/delete/friend/<int:id>' , methods = ['POST'])
 @login_required
@@ -248,19 +168,8 @@ def delete_friend_from_list(id:int):
             'status':'error',
             'message':'Unauthorized!'
         })
-
-    if request.method == 'POST':
-        try:
-            db.session.delete(existing_friend)
-            db.session.commit()
-
-            return jsonify({'status':'success'})
-
-        except Exception as e:
-            print('Error:',e)
-            return jsonify({'status':'error','message' : 'There was an issue'})
-
-    return render_template('main.html')
+    
+    return FriendController.remove_friend(id)
 
 
 # ------------- USER ROUTES ------------- # 
@@ -271,53 +180,16 @@ def profile_page():
     user = User.query.get(session['user_id'])
     return render_template('profile.html' , user = user)
 
-
 @app.route('/update/user/<int:id>', methods = ['POST'])
 @login_required
 def update_account(id:int):
-
-    current_user = User.query.get_or_404(id)
-    if request.method == 'POST':
-        data = get_frontend_form()
-
-        try:
-            current_user.email = data.get('email')
-            current_user.username = data.get('username')
-
-            db.session.commit()
-            return jsonify({'status':'success'})
-        
-        except Exception as e:
-            print('Error:',e)
-
-            return jsonify({
-                'status':'error',
-                'message':'There was an issue while updating your profile'
-            })
-    return render_template('profile.html')
-
+    data = get_frontend_form()
+    return UserController.update_user(id,data.get('email'),data.get('username'))
 
 @app.route('/delete/user/<int:id>' , methods = ['POST'])
 @login_required
 def delete_user_account(id:int):
-
-    current_user = User.query.get_or_404(id)
-
-    if request.method == 'POST':
-        try:
-            db.session.delete(current_user)
-            db.session.commit()
-            return jsonify({'status':'success'})
-    
-        except Exception as e :
-            print('Error:',e)
-            return jsonify({
-                'status':'error',
-                'message':'There was an issue deleting your account'
-            })
-    
-    return render_template('profile.html')
-
+    return UserController.delete_user(id)
 
         
 if __name__ == '__main__':
